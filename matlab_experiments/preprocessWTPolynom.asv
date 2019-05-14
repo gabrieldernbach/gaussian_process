@@ -1,0 +1,30 @@
+function [wt] = preprocessWT(wt)
+
+
+% method 1
+N = size(wt,2);
+
+%overlap 
+
+overlap = 0.05;
+overlapInt = ceil(N*overlap);
+
+x0  = -overlapInt;
+y0  = wt(:,N-overlapInt+1);
+dy0 = wt(:,N-overlapInt+1) - wt(:,N-overlapInt);
+
+x1  = overlapInt;
+y1  = wt(:,overlapInt+1);
+dy1 = wt(:,overlapInt+2) - wt(:,overlapInt+1);
+
+
+a =  (1/6)*dy0 + (1/6)*dy1;
+b = -(1/6)*dy0 + (1/4)*y0+(1/3)*dy1-(1/4)*y1;
+c = -(1/6)*dy0 - (1/6)*dy1-(1/2)*y0+(1/2)*y1;
+d =  (1/6)*dy0 + (1/4)*y0 -(1/3)*dy1+(3/4)*y1;
+
+
+
+
+
+end
