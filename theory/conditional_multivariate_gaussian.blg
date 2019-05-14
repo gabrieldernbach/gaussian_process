@@ -1,0 +1,48 @@
+This is BibTeX, Version 0.99d (TeX Live 2018)
+Capacity: max_strings=100000, hash_size=100000, hash_prime=85009
+The top-level auxiliary file: conditional_multivariate_gaussian.aux
+The style file: unsrt.bst
+Database file #1: references.bib
+Warning--can't use both volume and number fields in williams2006gaussian
+You've used 3 entries,
+            1791 wiz_defined-function locations,
+            457 strings with 3852 characters,
+and the built_in function-call counts, 460 in all, are:
+= -- 33
+> -- 16
+< -- 1
++ -- 7
+- -- 4
+* -- 16
+:= -- 75
+add.period$ -- 8
+call.type$ -- 3
+change.case$ -- 1
+chr.to.int$ -- 0
+cite$ -- 4
+duplicate$ -- 25
+empty$ -- 57
+format.name$ -- 4
+if$ -- 104
+int.to.chr$ -- 0
+int.to.str$ -- 3
+missing$ -- 4
+newline$ -- 17
+num.names$ -- 3
+pop$ -- 17
+preamble$ -- 1
+purify$ -- 0
+quote$ -- 0
+skip$ -- 13
+stack$ -- 0
+substring$ -- 0
+swap$ -- 5
+text.length$ -- 1
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 0
+warning$ -- 1
+while$ -- 3
+width$ -- 4
+write$ -- 30
+(There was 1 warning)
