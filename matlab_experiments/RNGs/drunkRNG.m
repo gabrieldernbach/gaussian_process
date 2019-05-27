@@ -2,10 +2,15 @@ clear all;
 close all;
 
 
+% simple drunk rng algorithm. 
+% x[n+1] = x[n] + vel * (rand(-1,+1) - x[n] * draw)
+% a approximate normal disribution can be archived with draw ~ 0.2 * vel
+% velocity:  determins the maximum per-sample change
+% draw:      negative change of velocity based on distance x to 0.
 
 n = 10;
-vel  = 0.1;
-draw = 1;
+vel  = 0.3;
+draw = 0.2 * vel;
 
 
 samples = [ drunk(n,vel,draw); ...

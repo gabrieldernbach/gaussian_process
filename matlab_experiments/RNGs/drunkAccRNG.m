@@ -1,12 +1,22 @@
 clear all; 
 close all;
 
+% drunk rng based on random change of acceleration
+% v[n+1] = (1-damp) * (v[n-1] + acc * (rand(-1,+1) - x[n] * draw));
+% x[n+1] = x[n] + v[n]
+% ~ normal distribution can be achieved with draw == acc, damp = 0.2
 
-acc  = 0.28;
-damp = 0.8;
+% acceleration: maximum per sample change of acceleration
+% damp: damping coefficient of velocity
+% draw: negative change of acceleration based on distance x to 0.
+
+
+
+acc  = 0.6;
+damp = 0.15;
 draw = acc;
 
-n = ceil(10 / acc)
+n = 100;
 
 samples = [ drunkAcc(n,acc,damp,draw); ...
             drunkAcc(n,acc,damp,draw); ...
@@ -38,16 +48,15 @@ function [out] = drunkAcc(n, acc, damp, draw)
     
     for i = 1:n
        
-        velInc = acc * ((-1 + 2*rand(1,1)) - x * draw);
         
-        vel = vel + velInc;
+        % acceleration and velocity update
+        vel = vel + acc * ((-1 + 2*rand(1,1)) - x * draw);
         
+        % damping
         vel = (1-damp) * vel;
         
-        xNew = x + vel;
-        
-        vel = xNew - x;
-        x = xNew;
+        % position update
+        x = x + vel;
         
         out(i) = x;
     end
@@ -72,6 +81,7 @@ for i = 1:numBins
    y(idx) = y(idx) + 1;
    
 end
+y = y ./ (maxVal-minVal);
 y = movmean(y,numOuts*0.1)/ratio;
 
 
