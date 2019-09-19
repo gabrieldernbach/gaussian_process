@@ -1,8 +1,13 @@
+'''
+Introductory Example Gaussian Process
+'''
 import numpy as np
 
+# generate inputs x1 and targets y1 for the regression task
 x1 = np.array([-1, -0.9, -0.4, -0.25, 0.5, 1]);
 y1 = np.array([0, -1, 2, 0.5, 2, 0]);
 
+# evaluate the model over the space of x 
 x2 = np.linspace(-1,1,1000);
 
 sigma = 0.3
@@ -45,6 +50,3 @@ plt.title('random instances drawn from the posterior distribution')
 
 plt.tight_layout()
 plt.show()
-
-
-

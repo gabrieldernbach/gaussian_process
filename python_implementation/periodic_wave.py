@@ -1,0 +1,104 @@
+'''
+Introductory Example Gaussian Process
+'''
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.pyplot.switch_backend('TKAgg')
+
+# generate inputs x1 and targets y1 for the regression task
+x1 = np.array([-1, -0.9, -0.4, -0.25, 0.5, 1]);
+y1 = np.array([0, -1, 2, 0.5, 2, 0]);
+
+# evaluate the model over the space of x 
+x2 = np.linspace(-1,1,1000);
+
+def gentest(function, start, end, n_samples):
+    x1 = np.sort(np.random.random(n_samples)) * (end - start) - start
+    y1 = function(x1)
+    x1s = (x1 + start) / (end - start)
+    return x1s, y1
+
+def extrapolate(x1, y1):
+    x1e = np.concatenate([x1-1, x1, x1+1])
+    y1e = np.concatenate([y1, y1, y1])
+    return x1e, y1e
+
+def window(margin,samples):
+        rampin = np.tanh(np.linspace(0,1,margin)) * 1/0.761594156
+        rampout = np.tanh(np.linspace(1,0,margin)) * 1/0.761594156
+        sustain = np.ones(samples - 2 * margin)
+        return np.concatenate([rampin, sustain, rampout])
+
+def draw_instances(sig2,num_instances=8):
+    # render multiple instances
+    U,S,V = np.linalg.svd(sig2)
+    samp = np.sort(np.random.randn(1000,num_instances),axis=1)
+    samp_rot = np.sqrt(S) * U @ samp
+
+    win = window(100,1000)[:,None]
+    instances = (y2[:,None] + win * samp_rot)
+    return instances
+
+class GP():
+    def __init__(self, sigma=0.3, llambda=0.01):
+        self.llambda = llambda
+        self.sigma = sigma
+
+    def kernel(self, a, b):
+        k = np.exp(- (a[:, None] - b[None, :])**2 / (2 * self.sigma ** 2))
+        k = k + np.eye(k.shape[0],k.shape[1]) * self.llambda
+        return k
+
+    def fit(self, x1, y1):
+        self.x1 = x1
+        self.y1 = y1
+        k11 = self.kernel(x1, x1)
+        self.k11i = np.linalg.inv(k11)
+
+    def predict(self, x2):
+        k12 = self.kernel(self.x1, x2)
+        k22 = self.kernel(x2, x2)
+        y2 = k12.T @ self.k11i @ self.y1.T
+        sig2 = k22 - k12.T @ self.k11i @ k12
+        return y2, sig2
+
+    def fit_predict(self, x1, y1, x2):
+        self.fit(x1,y1)
+        return self.predict(x2)
+
+if __name__ == '__main__':
+
+    # generate test data points
+    x1, y1 = gentest(np.sin, -1*np.pi, 1*np.pi, 8)
+    x1e, y1e = extrapolate(x1, y1)
+    x2 = np.linspace(0, 1, 1000)
+
+    # build model
+    gp = GP(sigma=0.1, llambda=0)
+    # generate model
+    y2, sig2 = gp.fit_predict(x1e, y1e, x2)
+
+    # draw random instances
+    instances = draw_instances(sig2, num_instances=12)
+
+    
+
+    plt.subplot(211)
+    plt.plot(x1,y1,
+            'o',mfc='None',c='C0',label='data')
+    plt.plot(x2,y2,
+            '-',c='C0',label='mean prediction')
+    std2 = 1.96 * np.sqrt(np.diag(sig2))
+    plt.plot(x2,y2-std2,
+            '-.',c='C1',linewidth=0.5,label='95 percentile')
+    plt.plot(x2,y2+std2
+            ,'-.',c='C1',linewidth=0.5)
+    plt.legend(); plt.title('mean prediction given data')
+
+    plt.subplot(212)
+    plt.plot(instances)
+    plt.title('random instances drawn from the posterior distribution')
+
+    plt.tight_layout()
+    plt.show()
