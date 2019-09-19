@@ -1,17 +1,11 @@
 '''
-Introductory Example Gaussian Process
+Gaussian process with utilities for seemless loops.
+The randomly drawn instances (interval [0,1]) of the process can be considered as wavetables.
 '''
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.pyplot.switch_backend('TKAgg')
-
-# generate inputs x1 and targets y1 for the regression task
-x1 = np.array([-1, -0.9, -0.4, -0.25, 0.5, 1]);
-y1 = np.array([0, -1, 2, 0.5, 2, 0]);
-
-# evaluate the model over the space of x 
-x2 = np.linspace(-1,1,1000);
 
 def gentest(function, start, end, n_samples):
     x1 = np.sort(np.random.random(n_samples)) * (end - start) - start
@@ -25,10 +19,10 @@ def extrapolate(x1, y1):
     return x1e, y1e
 
 def window(margin,samples):
-        rampin = np.tanh(np.linspace(0,1,margin)) * 1/0.761594156
-        rampout = np.tanh(np.linspace(1,0,margin)) * 1/0.761594156
-        sustain = np.ones(samples - 2 * margin)
-        return np.concatenate([rampin, sustain, rampout])
+    rampin = np.tanh(np.linspace(0,1,margin)) * 1/0.761594156
+    rampout = np.tanh(np.linspace(1,0,margin)) * 1/0.761594156
+    sustain = np.ones(samples - 2 * margin)
+    return np.concatenate([rampin, sustain, rampout])
 
 def draw_instances(sig2,num_instances=8):
     # render multiple instances
@@ -69,7 +63,7 @@ class GP():
 
 if __name__ == '__main__':
 
-    # generate test data points
+    # generate test data
     x1, y1 = gentest(np.sin, -1*np.pi, 1*np.pi, 8)
     x1e, y1e = extrapolate(x1, y1)
     x2 = np.linspace(0, 1, 1000)
