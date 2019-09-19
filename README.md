@@ -58,5 +58,5 @@ plt.show()
 ```
 
 
-![png](gp_files/gp_1_0.png)
+![png](README_files/gp_1_0.png)
 
