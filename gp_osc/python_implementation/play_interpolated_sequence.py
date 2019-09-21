@@ -3,14 +3,13 @@ Stochastic Wavetable Synthesis by GP Model Interpolation
 '''
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib
-matplotlib.use('TkAgg')
+import matplotlib; matplotlib.use('TkAgg')
 import sounddevice
 
 def gentest(function, start, end, n_samples):
     '''
     evaluate function on set of random point in domain [start, end]
-    and rescale domain results to live inside [0, 1]^d
+    and rescale domain to live inside [0, 1]^d afterwards
     '''
     x1 = np.sort(np.random.random(n_samples)) * (end - start) - start
     y1 = function(x1)
@@ -44,6 +43,7 @@ class GP():
         '''
         k = np.exp(- (a[:, None] - b[None, :])**2 / (2 * self.sigma ** 2))
         k = k + np.eye(k.shape[0],k.shape[1]) * self.llambda
+        # k = np.minimum(a[:,None],b[None,:]) # use spline kernel alternatively
         return k
 
     def fit(self, x1, y1):
@@ -72,6 +72,11 @@ class GP():
         return self.predict(x2)
 
 class OSC():
+    '''
+    oscillator module acting on a model Gaussian Process assumed 
+    to be periodic on the domain [0, 1],
+    it aids wavetables generation and rendering of interpolated sequences
+    '''
     def __init__(self, model, num_samples):
         self.num_samples = num_samples
         
@@ -85,7 +90,7 @@ class OSC():
         self.window = self.window_builder()
 
     def window_builder(self, relative_margin=0.2):
-        # create window for in out fading of variance
+        # create window for ramp on osicalltion variance
         margin = int(relative_margin * self.num_samples)
         rampin = np.tanh(np.linspace(0,1,margin)) * 1/0.761594156
         rampout = np.tanh(np.linspace(1,0,margin)) * 1/0.761594156
@@ -94,11 +99,11 @@ class OSC():
         return window
 
     def draw_wavetable(self, num_instances):
-        # generate standard normal noise and dewhiten 
+        # generate standard normal gaussian and dewhiten 
         standard_normal = np.random.randn(self.num_samples, num_instances)
         colored_normal = self.dewhiten @ standard_normal
         
-        # add mean to windowed colored_normal
+        # add mean to windowed and dewhitened gaussian
         instances = self.mean[:,None] + self.window[:,None] * colored_normal
         return instances # wave_len x num_instances
 
@@ -107,7 +112,7 @@ class OSC():
         
         blend = np.linspace(0, 1, blend_len // 2)
         ramp = np.append(blend, blend[::-1])
-        X = np.tile(table.T, blend_len // wave_len) * ramp
+        X = np.tile(table.T, blend_len // self.num_samples) * ramp
         
         Xa = np.pad(X, ((0,1), (0, 0)))
         Xb = np.pad(X, ((1,0), (0, 0)))
@@ -121,18 +126,23 @@ class OSC():
 if __name__ == '__main__':
 
     # generate test data
-    x1, y1 = gentest(np.sin, -1*np.pi, 1*np.pi, 4)
+    x1, y1 = gentest(function = np.sin,
+                     start = -np.pi,
+                     end = np.pi,
+                     n_samples = 4)
     x1e, y1e = extrapolate(x1, y1)
-    x2 = np.linspace(0, 1, 1000)
 
     # build model
-    gp = GP(sigma=0.1, llambda=0)
+    gp = GP(sigma=0.1, llambda=0.00001)
+    x2 = np.linspace(0, 1, 1000)
     y2, sig2 =  gp.fit_predict(x1e, y1e, x2)
 
     # oscillator
-    osc = OSC(gp, wave_len=1000)
-    instances = osc.draw_wavetable(num_instance=8)
-    sequence = osc.generate_interpolated_sequence(num_instances=20, blend_len=96000)
+    osc = OSC(gp, num_samples=1000)
+    instances = osc.draw_wavetable(num_instances=8) # for plotting
+    sequenceL = osc.generate_interpolated_sequence(num_instances=20, blend_len=96000)
+    sequenceR = osc.generate_interpolated_sequence(num_instances=20, blend_len=96000)
+    sequence = np.stack((sequenceL,sequenceR),axis=1)
     
     def play(X):
         fs = 48000
@@ -140,7 +150,6 @@ if __name__ == '__main__':
         sounddevice.wait()
     
     play(sequence)
-
 
     plt.subplot(211)
     plt.plot(x1,y1,
