@@ -18,26 +18,11 @@ def extrapolate(x1, y1):
     y1e = np.concatenate([y1, y1, y1])
     return x1e, y1e
 
-def window(margin,samples):
-    rampin = np.tanh(np.linspace(0,1,margin)) * 1/0.761594156
-    rampout = np.tanh(np.linspace(1,0,margin)) * 1/0.761594156
-    sustain = np.ones(samples - 2 * margin)
-    return np.concatenate([rampin, sustain, rampout])
-
-def draw_instances(sig2,num_instances=8):
-    # render multiple instances
-    U,S,V = np.linalg.svd(sig2)
-    samp = np.sort(np.random.randn(1000,num_instances),axis=1)
-    samp_rot = np.sqrt(S) * U @ samp
-
-    win = window(100,1000)[:,None]
-    instances = (y2[:,None] + win * samp_rot)
-    return instances
-
 class GP():
     def __init__(self, sigma=0.3, llambda=0.01):
         self.llambda = llambda
         self.sigma = sigma
+        return
 
     def kernel(self, a, b):
         k = np.exp(- (a[:, None] - b[None, :])**2 / (2 * self.sigma ** 2))
@@ -61,6 +46,26 @@ class GP():
         self.fit(x1,y1)
         return self.predict(x2)
 
+    def draw_instances(self, x2, num_instances=8):
+        num_samples = x2.shape[0]
+        y2, sig2 = self.predict(x2)
+
+        # generate noise with desired covariance
+        U,S,V = np.linalg.svd(sig2)
+        standard_sample = np.sort(np.random.randn(num_samples, num_instances),axis=1)
+        sample_rot = np.sqrt(S) * U @ standard_sample
+
+        # create window in [0,1]
+        margin = int(0.2 * num_samples)
+        rampin = np.tanh(np.linspace(0,1,margin)) * 1/0.761594156
+        rampout = np.tanh(np.linspace(1,0,margin)) * 1/0.761594156
+        sustain = np.ones(num_samples - 2 * margin)
+        window = np.concatenate([rampin, sustain, rampout])[:,None]
+
+        # add mean to windowed variance
+        instances = (y2[:,None] + window * sample_rot)
+        return instances
+
 if __name__ == '__main__':
 
     # generate test data
@@ -70,12 +75,10 @@ if __name__ == '__main__':
 
     # build model
     gp = GP(sigma=0.1, llambda=0)
-    # generate model
     y2, sig2 = gp.fit_predict(x1e, y1e, x2)
 
     # draw random instances
-    instances = draw_instances(sig2, num_instances=12)
-
+    instances = gp.draw_instances(x2, num_instances=12)
     
 
     plt.subplot(211)
